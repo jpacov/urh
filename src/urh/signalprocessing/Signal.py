@@ -39,7 +39,7 @@ class Signal(QObject):
     protocol_needs_update = pyqtSignal()
     data_edited = pyqtSignal()  # On Crop/Mute/Delete etc.
 
-    def __init__(self, filename: str, name="Signal", modulation: str = None, sample_rate: float = 1e6, parent=None):
+    def __init__(self, filename: str, name="Signal", modulation: str = None, sample_rate: float = 1e6, timestamp: float = 0, parent=None):
         super().__init__(parent)
         self.__name = name
         self.__tolerance = 5
@@ -51,6 +51,7 @@ class Signal(QObject):
         self.__center = 0
         self._noise_threshold = 0
         self.__sample_rate = sample_rate
+        self.__timestamp = timestamp
         self.noise_min_plot = 0
         self.noise_max_plot = 0
         self.block_protocol_update = False
@@ -181,6 +182,10 @@ class Signal(QObject):
             self.__sample_rate = val
             self.sample_rate_changed.emit(val)
 
+    @property
+    def timestamp(self):
+        return self.__timestamp
+    
     @property
     def parameter_cache(self) -> dict:
         """
