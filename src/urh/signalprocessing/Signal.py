@@ -185,6 +185,10 @@ class Signal(QObject):
     @property
     def timestamp(self):
         return self.__timestamp
+
+    @timestamp.setter
+    def timestamp(self, val):
+        self.__timestamp = val
     
     @property
     def parameter_cache(self) -> dict:
