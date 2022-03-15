@@ -25,7 +25,7 @@ class Message(object):
                  "alignment_offset", "bits_per_symbol"]
 
     def __init__(self, plain_bits, pause: int, message_type: MessageType, rssi=0, modulator_index=0, decoder=None,
-                 fuzz_created=False, bit_sample_pos=None, samples_per_symbol=100, participant=None, bits_per_symbol=1):
+                 fuzz_created=False, bit_sample_pos=None, samples_per_symbol=100, participant=None, bits_per_symbol=1, timestamp=0):
         """
 
         :param pause: pause AFTER the message in samples
@@ -44,7 +44,7 @@ class Message(object):
         self.participant = participant    # type: Participant
         self.message_type = message_type  # type: MessageType
 
-        self.timestamp = time.time()
+        self.timestamp = timestamp
         self.absolute_time = 0  # set in Compare Frame
         self.relative_time = 0  # set in Compare Frame
 

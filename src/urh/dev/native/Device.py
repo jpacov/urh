@@ -266,6 +266,7 @@ class Device(object):
         self.error_codes = {}
         self.device_messages = []
 
+        self.__first_data_timestamp = 0
         self.receive_process_function = self.device_receive
         self.send_process_function = self.device_send
 
@@ -573,8 +574,13 @@ class Device(object):
             self.parent_ctrl_conn.send((self.Command.SET_DIRECT_SAMPLING_MODE.name, int(value)))
         except (BrokenPipeError, OSError):
             pass
+    
+    @property
+    def first_data_timestamp(self):
+        return self.__first_data_timestamp
 
     def start_rx_mode(self):
+        self.__first_data_timestamp = 0
         self.init_recv_buffer()
         self.parent_data_conn, self.child_data_conn = Pipe(duplex=False)
         self.parent_ctrl_conn, self.child_ctrl_conn = Pipe()
@@ -684,8 +690,20 @@ class Device(object):
         while self.is_receiving:
             try:
                 byte_buffer = self.parent_data_conn.recv_bytes()
+
+                if (self.__first_data_timestamp == 0):
+                    self.__first_data_timestamp = time.time()
+                    calculating_timestamp = True
+                else:
+                    calculating_timestamp = False
+                    
                 samples = self.bytes_to_iq(byte_buffer)
                 n_samples = len(samples)
+                
+                if (calculating_timestamp):
+                    # Timestamp accurate correction
+                    self.__first_data_timestamp -= n_samples / self.sample_rate
+
                 if n_samples == 0:
                     continue
 
