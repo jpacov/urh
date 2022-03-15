@@ -691,7 +691,7 @@ class Device(object):
             try:
                 byte_buffer = self.parent_data_conn.recv_bytes()
 
-                if (self.__first_data_timestamp == 0):
+                if self.__first_data_timestamp == 0:
                     self.__first_data_timestamp = time.time()
                     calculating_timestamp = True
                 else:
@@ -700,7 +700,7 @@ class Device(object):
                 samples = self.bytes_to_iq(byte_buffer)
                 n_samples = len(samples)
                 
-                if (calculating_timestamp):
+                if calculating_timestamp:
                     # Timestamp accurate correction
                     self.__first_data_timestamp -= n_samples / self.sample_rate
 
