@@ -131,6 +131,7 @@ class ProtocolSniffer(ProtocolAnalyzer, QObject):
             self.__init_buffer()
 
     def sniff(self):
+        self.__livesignal_buffer_timestamp = 0
         self.is_running = True
         self.rcv_device.start()
         self.sniff_thread = Thread(target=self.check_for_data, daemon=True)
@@ -176,6 +177,12 @@ class ProtocolSniffer(ProtocolAnalyzer, QObject):
         if len(data) == 0:
             return
 
+        if self.__livesignal_buffer_timestamp == 0:
+            self.__livesignal_buffer_timestamp = self.rcv_device.data_timestamp
+
+        livesignal_buffer_timestamp = self.__livesignal_buffer_timestamp
+        self.__livesignal_buffer_timestamp += len(data) / self.rcv_device.sample_rate
+
         power_spectrum = data.real ** 2.0 + data.imag ** 2.0
         is_above_noise = np.sqrt(np.mean(power_spectrum)) > self.signal.noise_threshold
 
@@ -211,13 +218,16 @@ class ProtocolSniffer(ProtocolAnalyzer, QObject):
                                 self.signal.bits_per_symbol, self.signal.center_spacing)
 
         bit_data, pauses, bit_sample_pos = self._ppseq_to_bits(ppseq, samples_per_symbol,
-                                                               self.signal.bits_per_symbol, write_bit_sample_pos=False)
+                                                               self.signal.bits_per_symbol, write_bit_sample_pos=True)
 
+        i = 0
         for bits, pause in zip(bit_data, pauses):
+            message_timestamp = livesignal_buffer_timestamp + (bit_sample_pos[i][0] / self.rcv_device.sample_rate)
             message = Message(bits, pause, samples_per_symbol=samples_per_symbol, message_type=self.default_message_type,
-                              decoder=self.decoder)
+                              decoder=self.decoder, timestamp=message_timestamp)
             self.messages.append(message)
             self.message_sniffed.emit(len(self.messages) - 1)
+            i += 1
 
     def stop(self):
         self.is_running = False
