@@ -1263,7 +1263,7 @@ class SignalFrame(QFrame):
             time.sleep(0.1)
 
         filtered = np.frombuffer(filtered.get_obj(), dtype=np.complex64)
-        signal = self.signal.create_new(new_data=filtered.astype(np.complex64))
+        signal = self.signal.create_new(new_data=filtered.astype(np.complex64), new_timestamp=self.signal.timestamp)
         signal.name = self.signal.name + " filtered with f_low={0:.4n} f_high={1:.4n} bw={2:.4n}".format(f_low, f_high,
                                                                                                          filter_bw)
         self.signal_created.emit(signal)
