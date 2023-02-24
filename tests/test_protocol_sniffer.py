@@ -76,7 +76,24 @@ class TestProtocolSniffer(QtTestCase):
 
         # Send enough pauses to end sniffing
         self.network_sdr_plugin_sender.send_raw_data(IQArray(None, np.float32, 10 * 2 * samples_per_symbol), 1)
+        next_msg_timestamp = time.time()    # Due to simulated transmission method used in testing, 
+                                            # we won't be quite precise on the first timestamp on which data will be received
         time.sleep(1)
 
         sniffer.stop()
         self.assertEqual(sniffer.plain_bits_str, data)
+        # Validate timestamps:
+        for i in range(len(sniffer.messages)):
+            msg = sniffer.messages[i]
+            if i == 0:
+                # For the first message, we can't have much accuracy due to the simulated mechanism used to deliver data.
+                # Let's just verify the timestamp makes sense with following condition:
+                # (next_msg_timestamp < msg.timestamp  &&  msg.timestamp < next_msg_timestamp + 1)
+                self.assertLess(next_msg_timestamp, msg.timestamp)
+                self.assertLess(msg.timestamp, next_msg_timestamp + 1)
+            else:
+                # For each message, verify the timestamp according to the theoretical calculation:
+                # (next_msg_timestamp - 0.0001 < msg.timestamp  &&  msg.timestamp < next_msg_timestamp + 0.0001)
+                self.assertLess(next_msg_timestamp - 0.0001, msg.timestamp)
+                self.assertLess(msg.timestamp, next_msg_timestamp + 0.0001)
+            next_msg_timestamp = msg.timestamp + len(packages[i]) / modulator.sample_rate
